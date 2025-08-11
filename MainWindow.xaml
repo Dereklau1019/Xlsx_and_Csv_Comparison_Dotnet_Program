@@ -77,17 +77,31 @@
 
         <!-- Column Mapping Section -->
         <GroupBox Header="Column Mapping" Grid.Row="3" Margin="0,0,0,10">
-            <ScrollViewer>
-                <DataGrid x:Name="dgColumnMapping" AutoGenerateColumns="False" 
-                          CanUserAddRows="False" CanUserDeleteRows="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Source Column" Binding="{Binding SourceColumn}" IsReadOnly="True" Width="*"/>
-                        <DataGridComboBoxColumn Header="Destination Column" 
-                                                SelectedItemBinding="{Binding DestinationColumn}" 
-                                                Width="*" x:Name="colDestinationMapping"/>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </ScrollViewer>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                    <Button x:Name="btnAutoMap" Content="Auto Map Columns" Width="120" Height="25" 
+                            Click="BtnAutoMap_Click" Margin="0,0,10,0"/>
+                    <TextBlock Text="Automatically maps columns with similar names" 
+                               VerticalAlignment="Center" Foreground="Gray" FontSize="11"/>
+                </StackPanel>
+                
+                <ScrollViewer Grid.Row="1">
+                    <DataGrid x:Name="dgColumnMapping" AutoGenerateColumns="False" 
+                              CanUserAddRows="False" CanUserDeleteRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Source Column" Binding="{Binding SourceColumn}" IsReadOnly="True" Width="*"/>
+                            <DataGridComboBoxColumn Header="Destination Column" 
+                                                    SelectedItemBinding="{Binding DestinationColumn}" 
+                                                    Width="*" x:Name="colDestinationMapping"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </ScrollViewer>
+            </Grid>
         </GroupBox>
 
         <!-- Comparison Options Section -->

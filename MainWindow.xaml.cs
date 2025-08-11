@@ -90,6 +90,13 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                         DisplayFileInfo(destinationFilePath, destinationData, lblDestinationFileInfo);
                         UpdateDestinationColumnComboBox();
                         UpdateColumnMappings();
+                        
+                        // Auto-map columns if both files are loaded
+                        if (sourceData != null)
+                        {
+                            AutoMapColumns();
+                        }
+                        
                         CheckRunButtonEnabled();
                     }
                     else
@@ -300,6 +307,106 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             }
         }
 
+        private void AutoMapColumns()
+        {
+            if (sourceData == null || destinationData == null)
+                return;
+
+            // Get all destination column names
+            var destinationColumns = destinationData.Columns.Cast<DataColumn>()
+                .Select(c => c.ColumnName)
+                .ToList();
+
+            // Auto-map columns with the same names
+            foreach (var mapping in columnMappings)
+            {
+                if (mapping.SourceColumn != null)
+                {
+                    // Find exact match first (case-insensitive)
+                    var exactMatch = destinationColumns.FirstOrDefault(dc => 
+                        string.Equals(dc, mapping.SourceColumn, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (exactMatch != null)
+                    {
+                        mapping.DestinationColumn = exactMatch;
+                        continue;
+                    }
+
+                    // Find partial match (one contains the other)
+                    var partialMatch = destinationColumns.FirstOrDefault(dc => 
+                        dc.Contains(mapping.SourceColumn, StringComparison.OrdinalIgnoreCase) ||
+                        mapping.SourceColumn.Contains(dc, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (partialMatch != null)
+                    {
+                        mapping.DestinationColumn = partialMatch;
+                        continue;
+                    }
+
+                    // Find similar names (common patterns)
+                    var similarMatch = destinationColumns.FirstOrDefault(dc => 
+                        IsSimilarColumnName(mapping.SourceColumn, dc));
+                    
+                    if (similarMatch != null)
+                    {
+                        mapping.DestinationColumn = similarMatch;
+                    }
+                }
+            }
+
+            // Refresh the DataGrid to show the changes
+            dgColumnMapping.Items.Refresh();
+        }
+
+        private bool IsSimilarColumnName(string sourceName, string destinationName)
+        {
+            if (string.IsNullOrEmpty(sourceName) || string.IsNullOrEmpty(destinationName))
+                return false;
+
+            // Normalize names for comparison
+            var normalizedSource = NormalizeColumnName(sourceName);
+            var normalizedDest = NormalizeColumnName(destinationName);
+
+            // Check if normalized names are similar
+            if (string.Equals(normalizedSource, normalizedDest, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Check for common abbreviations and variations
+            var sourceWords = normalizedSource.Split(new[] { ' ', '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
+            var destWords = normalizedDest.Split(new[] { ' ', '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
+
+            // If both have words, check for word overlap
+            if (sourceWords.Length > 0 && destWords.Length > 0)
+            {
+                var commonWords = sourceWords.Intersect(destWords, StringComparer.OrdinalIgnoreCase);
+                if (commonWords.Count() >= Math.Min(sourceWords.Length, destWords.Length) * 0.7) // 70% overlap
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string NormalizeColumnName(string columnName)
+        {
+            if (string.IsNullOrEmpty(columnName))
+                return string.Empty;
+
+            // Remove common prefixes/suffixes and normalize
+            var normalized = columnName
+                .Replace("Column", "")
+                .Replace("Col", "")
+                .Replace("Field", "")
+                .Replace("Fld", "")
+                .Replace("_", " ")
+                .Replace("-", " ")
+                .Replace(".", " ");
+
+            // Remove extra spaces and trim
+            return string.Join(" ", normalized.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+        }
+
         private void CmbSourceMainColumn_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             CheckRunButtonEnabled();
@@ -336,6 +443,21 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         private void ChkIgnoreWhitespace_Unchecked(object sender, RoutedEventArgs e)
         {
             ignoreWhitespace = false;
+        }
+
+        private void BtnAutoMap_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                AutoMapColumns();
+                MessageBox.Show("Auto-mapping completed! Please review and adjust if needed.", "Auto-Map Complete",
+                              MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error during auto-mapping: {ex.Message}", "Auto-Map Error",
+                              MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private async void BtnRun_Click(object sender, RoutedEventArgs e)
