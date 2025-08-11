@@ -24,6 +24,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         private ObservableCollection<ColumnMapping>? columnMappings;
         private bool ignoreCase = true;
         private bool ignoreWhitespace = true;
+        private bool ignoreSymbols = false;
 
         public MainWindow()
         {
@@ -445,6 +446,16 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             ignoreWhitespace = false;
         }
 
+        private void ChkIgnoreSymbols_Checked(object sender, RoutedEventArgs e)
+        {
+            ignoreSymbols = true;
+        }
+
+        private void ChkIgnoreSymbols_Unchecked(object sender, RoutedEventArgs e)
+        {
+            ignoreSymbols = false;
+        }
+
         private void BtnAutoMap_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -483,7 +494,8 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                     SourceFilePath = sourceFilePath,
                     DestinationFilePath = destinationFilePath,
                     IgnoreCase = ignoreCase,
-                    IgnoreWhitespace = ignoreWhitespace
+                    IgnoreWhitespace = ignoreWhitespace,
+                    IgnoreSymbols = ignoreSymbols
                 };
 
                 await Task.Run(() => GenerateComparisonReport(comparisonData));
@@ -623,13 +635,13 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                         string sourceValue = sourceRow[mapping.Key]?.ToString() ?? "";
                         string destValue = destinationRow[mapping.Value]?.ToString() ?? "";
 
-                        if (!AreValuesEqual(sourceValue, destValue, data.IgnoreCase, data.IgnoreWhitespace))
+                        if (!AreValuesEqual(sourceValue, destValue, data.IgnoreCase, data.IgnoreWhitespace, data.IgnoreSymbols))
                         {
                             differences.Add(mapping.Key);
                         }
                     }
 
-                    rowData.Add("Existed!");
+                    rowData.Add(differences.Count > 0 ? "Half Match" : "Full Match");
                     rowData.Add(differences.Count > 0 ? $"Column not match: {string.Join(",", differences)}" : "All columns match");
                 }
                 else
@@ -640,8 +652,8 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                         rowData.Add("");
                     }
 
-                    rowData.Add("Not found!");
-                    rowData.Add("Not found!");
+                    rowData.Add("Not found");
+                    rowData.Add("Can not found the match column data!");
                 }
 
                 // Write row data
@@ -658,12 +670,21 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             workbook.SaveAs(reportPath);
         }
 
-        private bool AreValuesEqual(string value1, string value2, bool ignoreCase, bool ignoreWhitespace)
+        private bool AreValuesEqual(string value1, string value2, bool ignoreCase, bool ignoreWhitespace, bool ignoreSymbols)
         {
+            value1 ??= string.Empty;
+            value2 ??= string.Empty;
+
+            if (ignoreSymbols)
+            {
+                value1 = RemoveSymbols(value1, preserveWhitespace: true);
+                value2 = RemoveSymbols(value2, preserveWhitespace: true);
+            }
+
             if (ignoreWhitespace)
             {
-                value1 = value1?.Trim() ?? "";
-                value2 = value2?.Trim() ?? "";
+                value1 = value1.Trim();
+                value2 = value2.Trim();
             }
 
             if (ignoreCase)
@@ -672,6 +693,26 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             }
 
             return string.Equals(value1, value2, StringComparison.Ordinal);
+        }
+
+        private static string RemoveSymbols(string input, bool preserveWhitespace)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+
+            var filtered = new System.Text.StringBuilder(input.Length);
+            foreach (var ch in input)
+            {
+                if (char.IsLetterOrDigit(ch))
+                {
+                    filtered.Append(ch);
+                }
+                else if (preserveWhitespace && char.IsWhiteSpace(ch))
+                {
+                    filtered.Append(ch);
+                }
+                // skip other symbols/punctuation
+            }
+            return filtered.ToString();
         }
 
         private string GetReportSavePath(string defaultFileName)
@@ -709,5 +750,6 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         public string? DestinationFilePath { get; set; }
         public bool IgnoreCase { get; set; }
         public bool IgnoreWhitespace { get; set; }
+        public bool IgnoreSymbols { get; set; }
     }
 }

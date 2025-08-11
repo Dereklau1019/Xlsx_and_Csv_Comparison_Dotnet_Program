@@ -107,10 +107,12 @@
         <!-- Comparison Options Section -->
         <GroupBox Header="Comparison Options" Grid.Row="4" Margin="0,0,0,10">
             <StackPanel Orientation="Horizontal" Margin="10">
-                <CheckBox x:Name="chkIgnoreCase" Content="Ignore Case" IsChecked="True" 
-                          Margin="0,0,20,0" Checked="ChkIgnoreCase_Checked" Unchecked="ChkIgnoreCase_Unchecked"/>
-                <CheckBox x:Name="chkIgnoreWhitespace" Content="Ignore Whitespace" IsChecked="True" 
+                <CheckBox x:Name="chkIgnoreCase" Content="Ignore Case" IsChecked="True"  Margin="5,5,5,5"
+                         Checked="ChkIgnoreCase_Checked" Unchecked="ChkIgnoreCase_Unchecked"/>
+                <CheckBox x:Name="chkIgnoreWhitespace" Content="Ignore Whitespace" IsChecked="True"  Margin="5,5,5,5"
                           Checked="ChkIgnoreWhitespace_Checked" Unchecked="ChkIgnoreWhitespace_Unchecked"/>
+                <CheckBox x:Name="chkIgnoreSymbols" Content="Ignore Symbols"  IsChecked="False" Margin="5,5,5,5"
+                      Checked="ChkIgnoreSymbols_Checked" Unchecked="ChkIgnoreSymbols_Unchecked"/>
             </StackPanel>
         </GroupBox>
 
