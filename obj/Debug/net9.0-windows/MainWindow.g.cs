@@ -187,7 +187,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/Xlsx_and_Csv_Comparison_Dotnet_Program;component/mainwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/Xlsx_and_Csv_Comparison_Dotnet_Program;V1.0.0.0;component/mainwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\MainWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

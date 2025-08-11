@@ -1,18 +1,18 @@
 ﻿Xlsx_and_Csv_Comparison_Dotnet_Program
-
+1.0.0.0
 
 winexe
 C#
 .cs
-C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\obj\Debug\net9.0-windows\
+c:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\obj\Debug\net9.0-windows\
 Xlsx_and_Csv_Comparison_Dotnet_Program
 none
 false
 TRACE;DEBUG;NET;NET9_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NET9_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\App.xaml
+c:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\App.xaml
 11407045341
 
-41246208928
+61492736665
 207-1437865035
 MainWindow.xaml;
 
