@@ -26,3 +26,4 @@ C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Compar
 C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\bin\Debug\net9.0-windows\SixLabors.Fonts.dll
 C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\bin\Debug\net9.0-windows\XLParser.dll
 C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\obj\Debug\net9.0-windows\Xlsx_and.9840F13D.Up2Date
+C:\Users\User\Desktop\Project\BSOL SPFx\Run_As_DotnetProgram\Xlsx_and_Csv_Comparison_Dotnet_Program\obj\Debug\net9.0-windows\Xlsx_and_Csv_Comparison_Dotnet_Program.sourcelink.json

@@ -58,19 +58,31 @@
         <!-- Main Column Selection -->
         <GroupBox Header="Main Comparing Column Selection" Grid.Row="2" Margin="0,0,0,10">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
-                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock Text="Source Main Column:" Margin="0,0,0,5"/>
                     <ComboBox x:Name="cmbSourceMainColumn" SelectionChanged="CmbSourceMainColumn_SelectionChanged"/>
                 </StackPanel>
                 
-                <StackPanel Grid.Column="1">
+                <StackPanel Grid.Row="0" Grid.Column="1">
                     <TextBlock Text="Destination Main Column:" Margin="0,0,0,5"/>
                     <ComboBox x:Name="cmbDestinationMainColumn" SelectionChanged="CmbDestinationMainColumn_SelectionChanged"/>
+                </StackPanel>
+
+                <!-- Replacement checking inputs -->
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Text="Replace from:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox x:Name="txtReplaceFrom" Width="250" Margin="0,0,20,0"/>
+                    <TextBlock Text="Replaced to:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox x:Name="txtReplaceTo" Width="250"/>
                 </StackPanel>
             </Grid>
         </GroupBox>

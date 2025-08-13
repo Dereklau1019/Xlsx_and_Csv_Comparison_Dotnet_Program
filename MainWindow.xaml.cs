@@ -25,6 +25,8 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         private bool ignoreCase = true;
         private bool ignoreWhitespace = true;
         private bool ignoreSymbols = false;
+		private string? replacementFrom;
+		private string? replacementTo;
 
         public MainWindow()
         {
@@ -471,7 +473,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             }
         }
 
-        private async void BtnRun_Click(object sender, RoutedEventArgs e)
+		private async void BtnRun_Click(object sender, RoutedEventArgs e)
         {
             try
             {
@@ -483,8 +485,10 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 progressBar.IsIndeterminate = true;
                 lblProgress.Text = "Processing...";
 
-                // Capture all necessary data on UI thread before starting background work
-                var comparisonData = new ComparisonData
+				// Capture all necessary data on UI thread before starting background work
+				replacementFrom = txtReplaceFrom.Text;
+				replacementTo = txtReplaceTo.Text;
+				var comparisonData = new ComparisonData
                 {
                     SourceData = sourceData?.Copy(),
                     DestinationData = destinationData?.Copy(),
@@ -495,7 +499,9 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                     DestinationFilePath = destinationFilePath,
                     IgnoreCase = ignoreCase,
                     IgnoreWhitespace = ignoreWhitespace,
-                    IgnoreSymbols = ignoreSymbols
+					IgnoreSymbols = ignoreSymbols,
+					ReplacementFrom = replacementFrom,
+					ReplacementTo = replacementTo
                 };
 
                 await Task.Run(() => GenerateComparisonReport(comparisonData));
@@ -520,7 +526,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             }
         }
 
-        private void GenerateComparisonReport(ComparisonData data)
+		private void GenerateComparisonReport(ComparisonData data)
         {
             string sourceFileName = Path.GetFileNameWithoutExtension(data.SourceFilePath);
             string destinationFileName = Path.GetFileNameWithoutExtension(data.DestinationFilePath);
@@ -575,9 +581,9 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             var destinationLookup = new Dictionary<string, DataRow>();
             var duplicateKeys = new List<string>();
             
-            foreach (DataRow row in data.DestinationData.Rows)
+			foreach (DataRow row in data.DestinationData.Rows)
             {
-                string key = row[destinationMainColumn]?.ToString() ?? "";
+				string key = ApplyReplacement(row[destinationMainColumn]?.ToString() ?? string.Empty, data.ReplacementFrom, data.ReplacementTo);
                 if (!string.IsNullOrEmpty(key))
                 {
                     if (destinationLookup.ContainsKey(key))
@@ -606,9 +612,9 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             int currentRow = 2;
 
             // Process each source row
-            foreach (DataRow sourceRow in data.SourceData.Rows)
+			foreach (DataRow sourceRow in data.SourceData.Rows)
             {
-                string sourceKey = sourceRow[sourceMainColumn]?.ToString() ?? "";
+				string sourceKey = ApplyReplacement(sourceRow[sourceMainColumn]?.ToString() ?? string.Empty, data.ReplacementFrom, data.ReplacementTo);
                 var rowData = new List<object> { DateTime.Now };
 
                 // Add source data
@@ -670,7 +676,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             workbook.SaveAs(reportPath);
         }
 
-        private bool AreValuesEqual(string value1, string value2, bool ignoreCase, bool ignoreWhitespace, bool ignoreSymbols)
+		private bool AreValuesEqual(string value1, string value2, bool ignoreCase, bool ignoreWhitespace, bool ignoreSymbols)
         {
             value1 ??= string.Empty;
             value2 ??= string.Empty;
@@ -681,10 +687,10 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 value2 = RemoveSymbols(value2, preserveWhitespace: true);
             }
 
-            if (ignoreWhitespace)
+			if (ignoreWhitespace)
             {
-                value1 = value1.Trim();
-                value2 = value2.Trim();
+				value1 = RemoveAllWhitespace(value1);
+				value2 = RemoveAllWhitespace(value2);
             }
 
             if (ignoreCase)
@@ -695,7 +701,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             return string.Equals(value1, value2, StringComparison.Ordinal);
         }
 
-        private static string RemoveSymbols(string input, bool preserveWhitespace)
+		private static string RemoveSymbols(string input, bool preserveWhitespace)
         {
             if (string.IsNullOrEmpty(input)) return string.Empty;
 
@@ -712,8 +718,31 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 }
                 // skip other symbols/punctuation
             }
-            return filtered.ToString();
+			return filtered.ToString();
         }
+
+		private static string RemoveAllWhitespace(string input)
+		{
+			if (string.IsNullOrEmpty(input)) return string.Empty;
+			var filtered = new System.Text.StringBuilder(input.Length);
+			foreach (var ch in input)
+			{
+				if (!char.IsWhiteSpace(ch))
+				{
+					filtered.Append(ch);
+				}
+			}
+			return filtered.ToString();
+		}
+
+		private static string ApplyReplacement(string input, string? replaceFrom, string? replaceTo)
+		{
+			if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(replaceFrom))
+			{
+				return input ?? string.Empty;
+			}
+			return input.Replace(replaceFrom, replaceTo ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+		}
 
         private string GetReportSavePath(string defaultFileName)
         {
@@ -751,5 +780,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         public bool IgnoreCase { get; set; }
         public bool IgnoreWhitespace { get; set; }
         public bool IgnoreSymbols { get; set; }
+			public string? ReplacementFrom { get; set; }
+			public string? ReplacementTo { get; set; }
     }
 }
