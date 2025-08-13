@@ -77,12 +77,21 @@
                     <ComboBox x:Name="cmbDestinationMainColumn" SelectionChanged="CmbDestinationMainColumn_SelectionChanged"/>
                 </StackPanel>
 
-                <!-- Replacement checking inputs -->
-                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,10,0,0">
-                    <TextBlock Text="Replace from:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBox x:Name="txtReplaceFrom" Width="250" Margin="0,0,20,0"/>
-                    <TextBlock Text="Replaced to:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <TextBox x:Name="txtReplaceTo" Width="250"/>
+                <!-- Replacement Rules -->
+                <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,10,0,0">
+                    <TextBlock Text="Replacement Rules (applied top-to-bottom to the key)" Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <Button x:Name="btnAddReplacement" Content="Add Rule" Width="100" Height="25" Margin="0,0,8,0" Click="BtnAddReplacement_Click"/>
+                        <Button x:Name="btnRemoveReplacement" Content="Remove Selected" Width="130" Height="25" Margin="0,0,8,0" Click="BtnRemoveReplacement_Click"/>
+                        <Button x:Name="btnMoveReplacementUp" Content="Move Up" Width="90" Height="25" Margin="0,0,8,0" Click="BtnMoveReplacementUp_Click"/>
+                        <Button x:Name="btnMoveReplacementDown" Content="Move Down" Width="100" Height="25" Click="BtnMoveReplacementDown_Click"/>
+                    </StackPanel>
+                    <DataGrid x:Name="dgReplacementRules" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Replace From" Binding="{Binding From}" Width="*"/>
+                            <DataGridTextColumn Header="Replaced To" Binding="{Binding To}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
                 </StackPanel>
             </Grid>
         </GroupBox>

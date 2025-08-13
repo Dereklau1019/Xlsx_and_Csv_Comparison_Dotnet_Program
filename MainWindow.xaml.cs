@@ -21,18 +21,21 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         private DataTable? destinationData;
         private string? sourceFilePath;
         private string? destinationFilePath;
-        private ObservableCollection<ColumnMapping>? columnMappings;
+		private ObservableCollection<ColumnMapping> columnMappings;
+		private ObservableCollection<ReplacementRule> replacementRules = new ObservableCollection<ReplacementRule>();
         private bool ignoreCase = true;
         private bool ignoreWhitespace = true;
         private bool ignoreSymbols = false;
-		private string? replacementFrom;
-		private string? replacementTo;
+        // Deprecated single replacement inputs (replaced by rules list)
+        private string? replacementFrom;
+        private string? replacementTo;
 
-        public MainWindow()
+		public MainWindow()
         {
             InitializeComponent();
-            columnMappings = new ObservableCollection<ColumnMapping>();
+			columnMappings = new ObservableCollection<ColumnMapping>();
             dgColumnMapping.ItemsSource = columnMappings;
+			dgReplacementRules.ItemsSource = replacementRules;
         }
 
         private void BtnLoadSource_Click(object sender, RoutedEventArgs e)
@@ -157,7 +160,8 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 
                 // Clean and ensure unique column names
                 var columnNames = new List<string>();
-                foreach (string header in csv.HeaderRecord)
+                var headerRecord = csv.HeaderRecord ?? Array.Empty<string>();
+                foreach (string header in headerRecord)
                 {
                     string cleanHeader = CleanColumnName(header);
                     string uniqueHeader = MakeColumnNameUnique(cleanHeader, columnNames);
@@ -169,9 +173,10 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 while (csv.Read())
                 {
                     var row = dataTable.NewRow();
-                    for (int i = 0; i < csv.HeaderRecord.Length; i++)
+                    int columnCount = dataTable.Columns.Count;
+                    for (int i = 0; i < columnCount; i++)
                     {
-                        row[i] = csv.GetField(i);
+                        row[i] = csv.TryGetField(i, out string? field) ? field : string.Empty;
                     }
                     dataTable.Rows.Add(row);
                 }
@@ -486,8 +491,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 lblProgress.Text = "Processing...";
 
 				// Capture all necessary data on UI thread before starting background work
-				replacementFrom = txtReplaceFrom.Text;
-				replacementTo = txtReplaceTo.Text;
+				// Keep backward compatibility if any value is present later; rules list is primary
 				var comparisonData = new ComparisonData
                 {
                     SourceData = sourceData?.Copy(),
@@ -501,7 +505,8 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                     IgnoreWhitespace = ignoreWhitespace,
 					IgnoreSymbols = ignoreSymbols,
 					ReplacementFrom = replacementFrom,
-					ReplacementTo = replacementTo
+					ReplacementTo = replacementTo,
+					ReplacementRules = replacementRules.ToList()
                 };
 
                 await Task.Run(() => GenerateComparisonReport(comparisonData));
@@ -528,8 +533,20 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 
 		private void GenerateComparisonReport(ComparisonData data)
         {
-            string sourceFileName = Path.GetFileNameWithoutExtension(data.SourceFilePath);
-            string destinationFileName = Path.GetFileNameWithoutExtension(data.DestinationFilePath);
+			// Validate required inputs
+			if (data.SourceData == null || data.DestinationData == null ||
+				string.IsNullOrEmpty(data.SourceMainColumn) || string.IsNullOrEmpty(data.DestinationMainColumn))
+			{
+				return;
+			}
+
+			var sourceTable = data.SourceData;
+			var destinationTable = data.DestinationData;
+			var sourceMainColumn = data.SourceMainColumn;
+			var destinationMainColumn = data.DestinationMainColumn;
+
+			string sourceFileName = Path.GetFileNameWithoutExtension(data.SourceFilePath ?? string.Empty);
+			string destinationFileName = Path.GetFileNameWithoutExtension(data.DestinationFilePath ?? string.Empty);
             string reportFileName = $"{sourceFileName}_Compare_{destinationFileName}_Report.xlsx";
 
             // Show save dialog for report location
@@ -544,13 +561,13 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             var headers = new List<string> { "TimeStamp" };
 
             // Add all source columns
-            foreach (DataColumn column in data.SourceData.Columns)
+			foreach (DataColumn column in sourceTable.Columns)
             {
                 headers.Add($"Source_{column.ColumnName}");
             }
 
             // Add all destination columns
-            foreach (DataColumn column in data.DestinationData.Columns)
+			foreach (DataColumn column in destinationTable.Columns)
             {
                 headers.Add($"Dest_{column.ColumnName}");
             }
@@ -564,16 +581,14 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 worksheet.Cell(1, i + 1).Value = headers[i];
             }
 
-            string sourceMainColumn = data.SourceMainColumn;
-            string destinationMainColumn = data.DestinationMainColumn;
-
             // Create mapping dictionary
             var mappings = new Dictionary<string, string>();
-            foreach (var mapping in data.ColumnMappings)
+			var columnMappingsLocal = data.ColumnMappings ?? new List<ColumnMapping>();
+			foreach (var mapping in columnMappingsLocal)
             {
-                if (!string.IsNullOrEmpty(mapping.DestinationColumn))
+				if (!string.IsNullOrEmpty(mapping.SourceColumn) && !string.IsNullOrEmpty(mapping.DestinationColumn))
                 {
-                    mappings[mapping.SourceColumn] = mapping.DestinationColumn;
+					mappings[mapping.SourceColumn] = mapping.DestinationColumn;
                 }
             }
 
@@ -581,9 +596,9 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             var destinationLookup = new Dictionary<string, DataRow>();
             var duplicateKeys = new List<string>();
             
-			foreach (DataRow row in data.DestinationData.Rows)
+			foreach (DataRow row in destinationTable.Rows)
             {
-				string key = ApplyReplacement(row[destinationMainColumn]?.ToString() ?? string.Empty, data.ReplacementFrom, data.ReplacementTo);
+				string key = ApplyReplacements(row[destinationMainColumn!]?.ToString() ?? string.Empty, data);
                 if (!string.IsNullOrEmpty(key))
                 {
                     if (destinationLookup.ContainsKey(key))
@@ -612,15 +627,15 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
             int currentRow = 2;
 
             // Process each source row
-			foreach (DataRow sourceRow in data.SourceData.Rows)
+			foreach (DataRow sourceRow in sourceTable.Rows)
             {
-				string sourceKey = ApplyReplacement(sourceRow[sourceMainColumn]?.ToString() ?? string.Empty, data.ReplacementFrom, data.ReplacementTo);
+				string sourceKey = ApplyReplacements(sourceRow[sourceMainColumn!]?.ToString() ?? string.Empty, data);
                 var rowData = new List<object> { DateTime.Now };
 
                 // Add source data
-                foreach (DataColumn column in data.SourceData.Columns)
+				foreach (DataColumn column in sourceTable.Columns)
                 {
-                    rowData.Add(sourceRow[column] ?? "");
+					rowData.Add(sourceRow[column] ?? "");
                 }
 
                 if (destinationLookup.ContainsKey(sourceKey))
@@ -629,17 +644,17 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                     DataRow destinationRow = destinationLookup[sourceKey];
 
                     // Add destination data
-                    foreach (DataColumn column in data.DestinationData.Columns)
+					foreach (DataColumn column in destinationTable.Columns)
                     {
-                        rowData.Add(destinationRow[column] ?? "");
+						rowData.Add(destinationRow[column] ?? "");
                     }
 
                     // Check for differences with normalization options
                     var differences = new List<string>();
-                    foreach (var mapping in mappings)
+					foreach (var mapping in mappings)
                     {
-                        string sourceValue = sourceRow[mapping.Key]?.ToString() ?? "";
-                        string destValue = destinationRow[mapping.Value]?.ToString() ?? "";
+						string sourceValue = sourceRow[mapping.Key]?.ToString() ?? "";
+						string destValue = destinationRow[mapping.Value]?.ToString() ?? "";
 
                         if (!AreValuesEqual(sourceValue, destValue, data.IgnoreCase, data.IgnoreWhitespace, data.IgnoreSymbols))
                         {
@@ -653,7 +668,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
                 else
                 {
                     // Not found - add empty destination columns
-                    foreach (DataColumn column in data.DestinationData.Columns)
+                    foreach (DataColumn column in destinationTable.Columns)
                     {
                         rowData.Add("");
                     }
@@ -735,6 +750,43 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 			return filtered.ToString();
 		}
 
+		private void BtnAddReplacement_Click(object sender, RoutedEventArgs e)
+		{
+			replacementRules.Add(new ReplacementRule { From = string.Empty, To = string.Empty });
+		}
+
+		private void BtnRemoveReplacement_Click(object sender, RoutedEventArgs e)
+		{
+			if (dgReplacementRules.SelectedItem is ReplacementRule rule)
+			{
+				replacementRules.Remove(rule);
+			}
+		}
+
+		private void BtnMoveReplacementUp_Click(object sender, RoutedEventArgs e)
+		{
+			var index = dgReplacementRules.SelectedIndex;
+			if (index > 0 && index < replacementRules.Count)
+			{
+				var item = replacementRules[index];
+				replacementRules.RemoveAt(index);
+				replacementRules.Insert(index - 1, item);
+				dgReplacementRules.SelectedIndex = index - 1;
+			}
+		}
+
+		private void BtnMoveReplacementDown_Click(object sender, RoutedEventArgs e)
+		{
+			var index = dgReplacementRules.SelectedIndex;
+			if (index >= 0 && index < replacementRules.Count - 1)
+			{
+				var item = replacementRules[index];
+				replacementRules.RemoveAt(index);
+				replacementRules.Insert(index + 1, item);
+				dgReplacementRules.SelectedIndex = index + 1;
+			}
+		}
+
 		private static string ApplyReplacement(string input, string? replaceFrom, string? replaceTo)
 		{
 			if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(replaceFrom))
@@ -742,6 +794,26 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 				return input ?? string.Empty;
 			}
 			return input.Replace(replaceFrom, replaceTo ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+		}
+
+		private static string ApplyReplacements(string input, ComparisonData data)
+		{
+			string result = input ?? string.Empty;
+			if (data.ReplacementRules != null && data.ReplacementRules.Count > 0)
+			{
+				foreach (var rule in data.ReplacementRules)
+				{
+					if (!string.IsNullOrEmpty(rule?.From))
+					{
+						result = result.Replace(rule.From, rule?.To ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+					}
+				}
+			}
+			else if (!string.IsNullOrEmpty(data.ReplacementFrom))
+			{
+				result = ApplyReplacement(result, data.ReplacementFrom, data.ReplacementTo);
+			}
+			return result;
 		}
 
         private string GetReportSavePath(string defaultFileName)
@@ -782,5 +854,12 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
         public bool IgnoreSymbols { get; set; }
 			public string? ReplacementFrom { get; set; }
 			public string? ReplacementTo { get; set; }
+			public List<ReplacementRule>? ReplacementRules { get; set; }
     }
+
+		public class ReplacementRule
+		{
+			public string? From { get; set; }
+			public string? To { get; set; }
+		}
 }
