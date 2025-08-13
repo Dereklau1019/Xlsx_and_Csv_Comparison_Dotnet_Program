@@ -86,10 +86,18 @@
                         <Button x:Name="btnMoveReplacementUp" Content="Move Up" Width="90" Height="25" Margin="0,0,8,0" Click="BtnMoveReplacementUp_Click"/>
                         <Button x:Name="btnMoveReplacementDown" Content="Move Down" Width="100" Height="25" Click="BtnMoveReplacementDown_Click"/>
                     </StackPanel>
-                    <DataGrid x:Name="dgReplacementRules" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True">
+                    <DataGrid x:Name="dgReplacementRules" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True" CanUserSortColumns="False" SelectionMode="Single" SelectionUnit="FullRow">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Replace From" Binding="{Binding From}" Width="*"/>
-                            <DataGridTextColumn Header="Replaced To" Binding="{Binding To}" Width="*"/>
+                            <DataGridTextColumn Header="Replace From" Width="*">
+                                <DataGridTextColumn.Binding>
+                                    <Binding Path="From" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged"/>
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Replaced To" Width="*">
+                                <DataGridTextColumn.Binding>
+                                    <Binding Path="To" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged"/>
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>

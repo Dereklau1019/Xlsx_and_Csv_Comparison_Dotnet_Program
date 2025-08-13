@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Xlsx_and_Csv_Comparison_Dotnet_Program")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cffea534f5c2cb81b8b64c6b2aefdfac50806ee5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+093bb284bff5f99f26360b61537ad5e82f8a11e6")]
 [assembly: System.Reflection.AssemblyProductAttribute("Xlsx_and_Csv_Comparison_Dotnet_Program")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Xlsx_and_Csv_Comparison_Dotnet_Program")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

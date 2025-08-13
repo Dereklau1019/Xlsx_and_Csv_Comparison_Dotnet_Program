@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using Microsoft.Win32;
 using ClosedXML.Excel;
 using System.Globalization;
@@ -760,6 +761,7 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 			if (dgReplacementRules.SelectedItem is ReplacementRule rule)
 			{
 				replacementRules.Remove(rule);
+				dgReplacementRules.UpdateLayout();
 			}
 		}
 
@@ -769,9 +771,10 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 			if (index > 0 && index < replacementRules.Count)
 			{
 				var item = replacementRules[index];
-				replacementRules.RemoveAt(index);
-				replacementRules.Insert(index - 1, item);
+				replacementRules.Move(index, index - 1);
+				dgReplacementRules.UpdateLayout();
 				dgReplacementRules.SelectedIndex = index - 1;
+				dgReplacementRules.ScrollIntoView(item);
 			}
 		}
 
@@ -781,9 +784,10 @@ namespace Xlsx_and_Csv_Comparison_Dotnet_Program
 			if (index >= 0 && index < replacementRules.Count - 1)
 			{
 				var item = replacementRules[index];
-				replacementRules.RemoveAt(index);
-				replacementRules.Insert(index + 1, item);
+				replacementRules.Move(index, index + 1);
+				dgReplacementRules.UpdateLayout();
 				dgReplacementRules.SelectedIndex = index + 1;
+				dgReplacementRules.ScrollIntoView(item);
 			}
 		}
 
